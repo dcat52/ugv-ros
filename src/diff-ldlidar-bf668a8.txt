@@ -1,0 +1,49 @@
+diff --git a/launch/stl27l.launch.py b/launch/stl27l.launch.py
+index d6b2482..6297231 100644
+--- a/launch/stl27l.launch.py
++++ b/launch/stl27l.launch.py
+@@ -32,7 +32,7 @@ def generate_launch_description():
+         {'product_name': 'LDLiDAR_STL27L'},
+         {'topic_name': 'scan'},
+         {'frame_id': 'base_laser'},
+-        {'port_name': '/dev/ttyUSB0'},
++        {'port_name': '/dev/ttyACM0'},
+         {'port_baudrate': 921600},
+         {'laser_scan_dir': False},
+         {'enable_angle_crop_func': False},
+@@ -46,7 +46,7 @@ def generate_launch_description():
+     package='tf2_ros',
+     executable='static_transform_publisher',
+     name='base_link_to_base_laser_stl27l',
+-    arguments=['0','0','0.18','0','0','0','base_link','base_laser']
++    arguments=['0','0','0.18','0','0','1.57','base_link','base_laser']
+   )
+ 
+ 
+@@ -56,4 +56,4 @@ def generate_launch_description():
+   ld.add_action(ldlidar_node)
+   ld.add_action(base_link_to_laser_tf_node)
+ 
+-  return ld
+\ No newline at end of file
++  return ld
+diff --git a/ldlidar_driver/include/logger/log_module.h b/ldlidar_driver/include/logger/log_module.h
+index 46e1882..0d24c25 100644
+--- a/ldlidar_driver/include/logger/log_module.h
++++ b/ldlidar_driver/include/logger/log_module.h
+@@ -37,7 +37,7 @@
+ #ifndef LINUX
+ #include <windows.h>
+ #else
+-//#include <pthread.h>
++#include <pthread.h>
+ #include <stdarg.h>
+ #define printf_s(fileptr,str)  (fprintf(fileptr,"%s",str))
+ #define __in
+@@ -198,4 +198,4 @@ private:
+ #endif
+ 
+ #endif//__LDLIDAR_LOGGER_H__
+-/********************* (C) COPYRIGHT SHENZHEN LDROBOT CO., LTD *******END OF FILE ********/
+\ No newline at end of file
++/********************* (C) COPYRIGHT SHENZHEN LDROBOT CO., LTD *******END OF FILE ********/
