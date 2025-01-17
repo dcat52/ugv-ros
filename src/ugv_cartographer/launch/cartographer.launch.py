@@ -9,7 +9,7 @@ def generate_launch_description():
     pkg_share = FindPackageShare(package='ugv02_cartographer').find('ugv02_cartographer')
     
     # Configure node launch information 
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     # Map resolution
     resolution = LaunchConfiguration('resolution', default='0.05')
     # Map publish period  

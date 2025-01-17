@@ -32,9 +32,9 @@ options = {
 MAP_BUILDER.use_trajectory_builder_2d = true  -- whether use 2D SLAM
 TRAJECTORY_BUILDER_2D.submaps.num_range_data = 35  -- Number of range data for submaps in the 2D track builder  
 TRAJECTORY_BUILDER_2D.min_range = 0.1  -- ignore anything smaller than the robot radius, limiting it to the minimum scan range of the lidar
-TRAJECTORY_BUILDER_2D.max_range = 5.0  -- the maximum scanning range of the lidar
+TRAJECTORY_BUILDER_2D.max_range = 10.0  -- the maximum scanning range of the lidar
 TRAJECTORY_BUILDER_2D.missing_data_ray_length = 5.0  -- Restricted to maximum LiDAR scanning range  
-TRAJECTORY_BUILDER_2D.use_imu_data = false  -- whether use IMU data
+TRAJECTORY_BUILDER_2D.use_imu_data = true  -- whether use IMU data
 TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = true  -- Whether to scan for matches using real-time loopback detection
 
 TRAJECTORY_BUILDER_2D.motion_filter.max_angle_radians = math.rad(0.1)  -- Modify 1.0 to 0.1, increased sensitivity to movement
