@@ -23,7 +23,9 @@ setup(
     entry_points={
         'console_scripts': [
             "serial_processor = ugv_control_board.serial_processor_node:main",
-            "velocity_command = ugv_control_board.velocity_command_node:main" 
+            "velocity_command = ugv_control_board.velocity_command_node:main",
+            "msg_out = ugv_control_board.msg_out_node:main" 
+ 
         ],
     },
 )

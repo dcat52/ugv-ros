@@ -65,6 +65,7 @@ class SerialProcessorNode(Node):
         self.raw_roll_pitch_pub = self.create_publisher(Int32MultiArray, 'raw/roll_pitch', 40)
         self.raw_voltage_pub = self.create_publisher(Float32, 'raw/battery_voltage', 40)
         self.raw_imu_pub = self.create_publisher(Imu, 'raw/imu_data', 40)
+        self.raw_esp_now_msg_pub = self.create_publisher(String, 'raw/msg_in', 40)
         self.imu_pub = self.create_publisher(Imu, 'imu', 40)
 
         self.disable_feedback_flow()
@@ -193,6 +194,13 @@ class SerialProcessorNode(Node):
             
             self.imu_pub.publish(imu_msg)
 
+        elif data['T'] == 1003:  # ESP-NOW received message
+                # Publish the received message to /raw/msg_in
+                esp_now_msg = String()
+                s = data.get("mac", "") + " : " + data.get("megs", "")
+                print(s)
+                esp_now_msg.data = s
+                self.raw_esp_now_msg_pub.publish(esp_now_msg)
         else:
             print(data)
 

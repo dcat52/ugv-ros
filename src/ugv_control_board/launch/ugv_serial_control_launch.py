@@ -16,7 +16,15 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    msg_out_node = Node(
+        package='ugv_control_board',
+        executable='msg_out',
+        output='screen',
+        emulate_tty=True
+    )
+
     return LaunchDescription([
         serial_processor_node,
-        velocity_command_node
+        velocity_command_node,
+        msg_out_node
     ])
