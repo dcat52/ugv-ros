@@ -2,6 +2,8 @@
 # serial_processor_node.py
 import traceback
 
+import math
+
 import numpy as np
 
 import json
@@ -17,6 +19,7 @@ from rclpy.time import Time
 
 from std_msgs.msg import String, Float32, Int32MultiArray
 from sensor_msgs.msg import Imu, BatteryState
+from nav_msgs.msg import Odometry
 
 from tf_transformations import quaternion_from_euler
 
@@ -58,21 +61,29 @@ class SerialProcessorNode(Node):
         self.serial_read_timer = self.create_timer(0.001, self.read_serial_data)
 
         # Create a timer to periodically request IMU data
-        self.imu_request_timer = self.create_timer(0.1, lambda: self.serial_write_json(json_messages.IMU_DATA_REQUEST)) 
+        self.imu_request_timer = self.create_timer(0.1, lambda: self.serial_write_json(json_messages.IMU_DATA_REQUEST1)) 
+        self.imu_request_timer = self.create_timer(0.1, lambda: self.serial_write_json(json_messages.IMU_DATA_REQUEST2)) 
 
         # Create publishers for different data types
         self.raw_serial_msg_pub = self.create_publisher(String, 'raw/serial_in', 1000)
-        self.raw_left_wheel_vel_pub = self.create_publisher(Float32, 'raw/left_wheel_velocity', 40)
-        self.raw_right_wheel_vel_pub = self.create_publisher(Float32, 'raw/right_wheel_velocity', 40)
+        # self.raw_left_wheel_vel_pub = self.create_publisher(Float32, 'raw/left_wheel_velocity', 40)
+        # self.raw_right_wheel_vel_pub = self.create_publisher(Float32, 'raw/right_wheel_velocity', 40)
         self.raw_roll_pitch_pub = self.create_publisher(Int32MultiArray, 'raw/roll_pitch', 40)
-        self.raw_voltage_pub = self.create_publisher(Float32, 'raw/battery_voltage', 40)
+        # self.raw_voltage_pub = self.create_publisher(Float32, 'raw/battery_voltage', 40)
         self.raw_imu_pub = self.create_publisher(Imu, 'raw/imu_data', 40)
         self.raw_esp_now_msg_pub = self.create_publisher(String, 'raw/msg_in', 40)
         self.imu_pub = self.create_publisher(Imu, 'imu', 40)
+        self.odom_pub = self.create_publisher(Odometry, 'odom', 40)
+
+        self.raw_theta_pub = self.create_publisher(Float32, 'raw/theta', 40)
 
         self.serial_write_json(json_messages.DISABLE_STREAM_CHASSIS_INFO)
         self.serial_write_json(json_messages.ADD_ANY_BROADCAST_PEER)
         self.serial_write_json(json_messages.DISABLE_UART_WRITE_ECHO)
+
+        self.pose_x = 0.0
+        self.pose_y = 0.0
+        self.pose_theta = 0.0
 
         self.imu_calibration_data = {
             'x_scale': 1.004, 'y_scale': 1.006, 'z_scale': 0.977, 
@@ -129,15 +140,15 @@ class SerialProcessorNode(Node):
 
         if data['T'] == 1001:
             try:
-                # Publish left wheel velocity
-                left_wheel_msg = Float32()
-                left_wheel_msg.data = float(data['L'])
-                self.raw_left_wheel_vel_pub.publish(left_wheel_msg)
+                # # Publish left wheel velocity
+                # left_wheel_msg = Float32()
+                # left_wheel_msg.data = float(data['L'])
+                # self.raw_left_wheel_vel_pub.publish(left_wheel_msg)
 
-                # Publish right wheel velocity
-                right_wheel_msg = Float32()
-                right_wheel_msg.data = float(data['R'])
-                self.raw_right_wheel_vel_pub.publish(right_wheel_msg)
+                # # Publish right wheel velocity
+                # right_wheel_msg = Float32()
+                # right_wheel_msg.data = float(data['R'])
+                # self.raw_right_wheel_vel_pub.publish(right_wheel_msg)
 
                 # Publish IMU data
                 intarr_msg = Int32MultiArray()
@@ -147,10 +158,69 @@ class SerialProcessorNode(Node):
                 intarr_msg.data = arr
                 self.raw_roll_pitch_pub.publish(intarr_msg)
 
-                # Publish voltage
-                voltage_msg = Float32()
-                voltage_msg.data = float(data['v'])
-                self.raw_voltage_pub.publish(voltage_msg)
+                # Get the current time
+                current_time = self.get_clock().now()
+
+                # Calculate time elapsed since the last measurement
+                if hasattr(self, 'last_measurement_time'):
+                    dt = (current_time - self.last_measurement_time).nanoseconds / 1e9  # Convert to seconds
+                else:
+                    dt = 0.1  # Use a default value for the first measurement
+
+                self.last_measurement_time = current_time  # Update last measurement time
+
+                # Get left and right track velocities
+                left_track_vel = float(data['L'])
+                right_track_vel = float(data['R'])
+
+                wheel_distance = 0.19
+                # Calculate linear and angular velocity
+                linear_velocity = (left_track_vel + right_track_vel) / 2.0
+                angular_velocity = (right_track_vel - left_track_vel) / wheel_distance
+
+                # # Calculate net speed (magnitude of linear velocity)
+                # net_speed = np.sqrt(linear_velocity ** 2)
+
+                # # Publish net speed
+                # net_speed_msg = Float32()
+                # net_speed_msg.data = net_speed
+                # self.net_speed_pub.publish(net_speed_msg)
+
+                # Calculate and publish odometry
+                if dt > 0:
+                    dx = linear_velocity * dt * np.cos(self.pose_theta)
+                    dy = linear_velocity * dt * np.sin(self.pose_theta)
+                    dtheta = angular_velocity * dt
+
+                    self.pose_x += dx
+                    self.pose_y += dy
+                    self.pose_theta += dtheta
+                    raw_theta_msg = Float32()
+                    raw_theta_msg.data = self.pose_theta
+                    self.raw_theta_pub.publish(raw_theta_msg)
+
+                    # Convert to radians
+                    # theta_radians = math.radians(self.pose_theta + dtheta)
+
+                    # Create and publish the Odometry message
+                    odom_msg = Odometry()
+                    odom_msg.header.stamp = current_time.to_msg()
+                    odom_msg.child_frame_id = "odom_frame"
+                    odom_msg.pose.pose.position.x = self.pose_x + dx
+                    odom_msg.pose.pose.position.y = self.pose_y + dy
+                    x,y,z,w = quaternion_from_euler(0.0, 0.0, self.pose_theta + dtheta)
+                    odom_msg.pose.pose.orientation.x = x
+                    odom_msg.pose.pose.orientation.y = y
+                    odom_msg.pose.pose.orientation.z = z
+                    odom_msg.pose.pose.orientation.w = w
+                    odom_msg.twist.twist.linear.x = linear_velocity
+                    odom_msg.twist.twist.angular.z = angular_velocity
+                    self.odom_pub.publish(odom_msg)
+
+                # # Publish voltage
+                # voltage_msg = Float32()
+                # voltage_msg.data = float(data['v'])
+                # self.raw_voltage_pub.publish(voltage_msg)
             except Exception as e:
                 self.get_logger().warn(e)
                 self.get_logger().warn(traceback.format_exc())

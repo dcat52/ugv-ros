@@ -23,8 +23,18 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    tf_base_to_laser = Node(package = "tf2_ros", 
+                executable = "static_transform_publisher",
+                arguments = ["0" "0" "0.18" "0" "0" "-1.57" "base_link" "laser_link"])
+
+    tf_base_to_imu = Node(package = "tf2_ros", 
+                executable = "static_transform_publisher",
+                arguments = ["0" "0" "0" "0" "0" "0" "base_link" "imu_link"])
+
     return LaunchDescription([
         serial_processor_node,
         velocity_command_node,
-        msg_out_node
+        msg_out_node,
+        tf_base_to_laser,
+        tf_base_to_imu
     ])
