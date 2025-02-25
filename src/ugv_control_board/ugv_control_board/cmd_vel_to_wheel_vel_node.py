@@ -32,8 +32,8 @@ class CmdVelToWheelVelocities(Node):
         # Create the JSON message
         data = {
             "T": 1,
-            "L": left_wheel_vel,
-            "R": right_wheel_vel
+            "L": left_wheel_vel/10.0,
+            "R": right_wheel_vel/10.0
         }
         json_string = json.dumps(data)
 

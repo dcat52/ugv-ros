@@ -55,7 +55,7 @@ class SerialProcessorNode(Node):
 
         # Create a subscriber to receive commands
         self.serial_write_sub = self.create_subscription(
-            String, 'raw/serial_write', self.serial_write_callback, 1000)
+            String, 'raw/serial_write', self.serial_write_callback, 200)
 
         # Create a timer to periodically read serial data
         self.serial_read_timer = self.create_timer(0.001, self.read_serial_data)
@@ -65,17 +65,17 @@ class SerialProcessorNode(Node):
         self.imu_request_timer = self.create_timer(0.1, lambda: self.serial_write_json(json_messages.IMU_DATA_REQUEST2)) 
 
         # Create publishers for different data types
-        self.raw_serial_msg_pub = self.create_publisher(String, 'raw/serial_in', 1000)
+        self.raw_serial_msg_pub = self.create_publisher(String, 'raw/serial_in', 200)
         # self.raw_left_wheel_vel_pub = self.create_publisher(Float32, 'raw/left_wheel_velocity', 40)
         # self.raw_right_wheel_vel_pub = self.create_publisher(Float32, 'raw/right_wheel_velocity', 40)
-        self.raw_roll_pitch_pub = self.create_publisher(Int32MultiArray, 'raw/roll_pitch', 40)
+        self.raw_roll_pitch_pub = self.create_publisher(Int32MultiArray, 'raw/roll_pitch', 10)
         # self.raw_voltage_pub = self.create_publisher(Float32, 'raw/battery_voltage', 40)
-        self.raw_imu_pub = self.create_publisher(Imu, 'raw/imu_data', 40)
-        self.raw_esp_now_msg_pub = self.create_publisher(String, 'raw/msg_in', 40)
-        self.imu_pub = self.create_publisher(Imu, 'imu', 40)
-        self.odom_pub = self.create_publisher(Odometry, 'odom', 40)
+        self.raw_imu_pub = self.create_publisher(Imu, 'raw/imu_data', 10)
+        self.raw_esp_now_msg_pub = self.create_publisher(String, 'raw/msg_in', 10)
+        self.imu_pub = self.create_publisher(Imu, 'imu', 10)
+        self.odom_pub = self.create_publisher(Odometry, 'odom', 10)
 
-        self.raw_theta_pub = self.create_publisher(Float32, 'raw/theta', 40)
+        self.raw_theta_pub = self.create_publisher(Float32, 'raw/theta', 10)
 
         self.serial_write_json(json_messages.DISABLE_STREAM_CHASSIS_INFO)
         self.serial_write_json(json_messages.ADD_ANY_BROADCAST_PEER)
@@ -173,7 +173,7 @@ class SerialProcessorNode(Node):
                 left_track_vel = float(data['L'])
                 right_track_vel = float(data['R'])
 
-                wheel_distance = 0.19
+                wheel_distance = 0.18
                 # Calculate linear and angular velocity
                 linear_velocity = (left_track_vel + right_track_vel) / 2.0
                 angular_velocity = (right_track_vel - left_track_vel) / wheel_distance
@@ -205,7 +205,7 @@ class SerialProcessorNode(Node):
                     # Create and publish the Odometry message
                     odom_msg = Odometry()
                     odom_msg.header.stamp = current_time.to_msg()
-                    odom_msg.child_frame_id = "odom_frame"
+                    odom_msg.child_frame_id = "odom"
                     odom_msg.pose.pose.position.x = self.pose_x + dx
                     odom_msg.pose.pose.position.y = self.pose_y + dy
                     x,y,z,w = quaternion_from_euler(0.0, 0.0, self.pose_theta + dtheta)
