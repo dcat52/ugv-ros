@@ -48,14 +48,14 @@ def generate_launch_description():
 
     tf_footprint_to_base = Node(package = "tf2_ros", 
                 executable = "static_transform_publisher",
-                arguments = ["0", "0", "0", "0", "0", "0", "base_footprint", "base_link"])
+                arguments = ["0", "0", "0", "0", "0", "0", "base_link", "base_footprint"])
 
 
     return LaunchDescription([
-        tf_odom_to_base,
         serial_processor_node,
         velocity_command_node,
         msg_out_node,
+        tf_odom_to_base,
         tf_base_to_mount,
         tf_mount_to_imu,
         tf_mount_to_laser,

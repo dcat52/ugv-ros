@@ -55,7 +55,7 @@ class SerialProcessorNode(Node):
 
         # Create a subscriber to receive commands
         self.serial_write_sub = self.create_subscription(
-            String, 'raw/serial_write', self.serial_write_callback, 200)
+            String, 'raw/serial_write', self.serial_write_callback, 100)
 
         # Create a timer to periodically read serial data
         self.serial_read_timer = self.create_timer(0.001, self.read_serial_data)
@@ -65,7 +65,7 @@ class SerialProcessorNode(Node):
         self.imu_request_timer = self.create_timer(0.1, lambda: self.serial_write_json(json_messages.IMU_DATA_REQUEST2)) 
 
         # Create publishers for different data types
-        self.raw_serial_msg_pub = self.create_publisher(String, 'raw/serial_in', 200)
+        self.raw_serial_msg_pub = self.create_publisher(String, 'raw/serial_in', 100)
         # self.raw_left_wheel_vel_pub = self.create_publisher(Float32, 'raw/left_wheel_velocity', 40)
         # self.raw_right_wheel_vel_pub = self.create_publisher(Float32, 'raw/right_wheel_velocity', 40)
         self.raw_roll_pitch_pub = self.create_publisher(Int32MultiArray, 'raw/roll_pitch', 10)
